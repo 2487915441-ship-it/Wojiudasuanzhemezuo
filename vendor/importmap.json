@@ -1,0 +1,14 @@
+{
+  "imports": {
+    "three": "./vendor/three/lib/three.module.js",
+    "three/addons/": "./vendor/three/examples/jsm/",
+    "three/examples/jsm/": "./vendor/three/examples/jsm/",
+    "gsap": "./vendor/gsap/index.js",
+    "gsap/": "./vendor/gsap/",
+    "camera-controls": "./vendor/camera-controls/lib/camera-controls.module.js",
+    "three-mesh-bvh": "./vendor/three-mesh-bvh/lib/index.module.js",
+    "three-bvh-csg": "./vendor/three-bvh-csg/lib/index.module.js",
+    "postprocessing": "./vendor/postprocessing/lib/index.js",
+    "simplex-noise": "./vendor/simplex-noise/lib/esm/simplex-noise.js"
+  }
+}

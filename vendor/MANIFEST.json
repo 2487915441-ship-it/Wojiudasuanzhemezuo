@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-08-29",
+  "packages": {
+    "three": {
+      "version": "0.185.1",
+      "files": 230,
+      "bytes": 4780902,
+      "skipped_webgpu": [
+        "examples/jsm/objects/LensflareMesh.js",
+        "examples/jsm/objects/SkyMesh.js",
+        "examples/jsm/objects/Water2Mesh.js",
+        "examples/jsm/objects/WaterMesh.js",
+        "examples/jsm/lines/webgpu/Line2.js",
+        "examples/jsm/lines/webgpu/LineSegments2.js",
+        "examples/jsm/lines/webgpu/Wireframe.js",
+        "examples/jsm/modifiers/CurveModifierGPU.js",
+        "examples/jsm/csm/CSMShadowNode.js",
+        "examples/jsm/helpers/LightProbeHelperGPU.js",
+        "examples/jsm/helpers/TextureHelperGPU.js",
+        "examples/jsm/utils/ShadowMapViewerGPU.js",
+        "examples/jsm/utils/WebGPUTextureUtils.js",
+        "examples/jsm/materials/LDrawConditionalLineNodeMaterial.js",
+        "examples/jsm/materials/WoodNodeMaterial.js",
+        "examples/jsm/misc/ProgressiveLightMapGPU.js"
+      ],
+      "missing": []
+    },
+    "gsap": {
+      "version": "3.15.0",
+      "files": 14,
+      "bytes": 639157,
+      "skipped_webgpu": [],
+      "missing": []
+    },
+    "camera-controls": {
+      "version": "3.1.2",
+      "files": 1,
+      "bytes": 117547,
+      "skipped_webgpu": [],
+      "missing": []
+    },
+    "three-mesh-bvh": {
+      "version": "0.9.14",
+      "files": 1,
+      "bytes": 290590,
+      "skipped_webgpu": [],
+      "missing": []
+    },
+    "three-bvh-csg": {
+      "version": "0.0.18",
+      "files": 1,
+      "bytes": 163535,
+      "skipped_webgpu": [],
+      "missing": []
+    },
+    "postprocessing": {
+      "version": "6.39.4",
+      "files": 1,
+      "bytes": 633286,
+      "skipped_webgpu": [],
+      "missing": []
+    },
+    "simplex-noise": {
+      "version": "4.0.3",
+      "files": 1,
+      "bytes": 18694,
+      "skipped_webgpu": [],
+      "missing": []
+    }
+  },
+  "importmap": {
+    "three": "./vendor/three/lib/three.module.js",
+    "three/addons/": "./vendor/three/examples/jsm/",
+    "three/examples/jsm/": "./vendor/three/examples/jsm/",
+    "gsap": "./vendor/gsap/index.js",
+    "gsap/": "./vendor/gsap/",
+    "camera-controls": "./vendor/camera-controls/lib/camera-controls.module.js",
+    "three-mesh-bvh": "./vendor/three-mesh-bvh/lib/index.module.js",
+    "three-bvh-csg": "./vendor/three-bvh-csg/lib/index.module.js",
+    "postprocessing": "./vendor/postprocessing/lib/index.js",
+    "simplex-noise": "./vendor/simplex-noise/lib/esm/simplex-noise.js"
+  }
+}

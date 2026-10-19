@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>头顶的网 The Net Above Us · 武汉民主路社区</title>
+<style>
+  :root{
+    --paper:#F8F7E5; --ink:#1D1D1D; --ochre:#b39c4f;
+    --hair:rgba(29,29,29,.18); --hairL:rgba(248,247,229,.22);
+    --evid:#5d8a54; --infer:#c07a2a; --sim:#b13a2f;
+    --panel:rgba(20,18,14,.88);
+    --sans:"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;
+    --serif:"Noto Serif SC","Songti SC",Georgia,serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden; background:#0e0d0b; font:14px/1.65 var(--sans); color:var(--paper); }
+  canvas{ display:block; }
+  button{ font-family:var(--sans); }
+  :focus-visible{ outline:2px solid var(--ochre); outline-offset:2px; }
+
+  /* 噪点纸感 */
+  #grain{ position:fixed; inset:0; pointer-events:none; z-index:40; opacity:.06; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  /* ---------- 顶部 ---------- */
+  #topbar{ position:fixed; top:0; left:0; right:0; z-index:20; display:flex; justify-content:space-between; align-items:flex-start;
+    padding:18px 22px 26px; pointer-events:none;
+    background:linear-gradient(rgba(14,13,11,.42), transparent); }
+  #topbar>*{ pointer-events:auto; }
+  #titleBlock{ border-left:2px solid var(--ochre); padding-left:12px; }
+  #titleBlock .en{ font-size:10px; letter-spacing:.24em; color:var(--ochre); }
+  #titleBlock h1{ margin:1px 0 0; font-family:var(--serif); font-size:22px; font-weight:700; letter-spacing:.10em; color:var(--paper); }
+  #titleBlock .tg{ font-size:11px; color:rgba(248,247,229,.62); margin-top:2px; letter-spacing:.04em; }
+  #actions{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; max-width:60vw; }
+  #actions button{ border:1px solid var(--hairL); background:rgba(20,18,14,.35); backdrop-filter:blur(6px); color:rgba(248,247,229,.85);
+    font-size:11.5px; letter-spacing:.08em; padding:7px 12px; cursor:pointer; transition:all .18s; min-height:34px; }
+  #actions button:hover{ border-color:var(--ochre); color:var(--ochre); background:rgba(179,156,79,.12); }
+  #actions button:active{ transform:translateY(1px); }
+  #actions button.on{ background:var(--ochre); border-color:var(--ochre); color:#1D1D1D; font-weight:600; }
+
+  /* ---------- 图例（左下） ---------- */
+  #legend{ position:fixed; left:22px; bottom:86px; z-index:15; font-size:10.5px; color:rgba(248,247,229,.72);
+    border-left:1px solid var(--hairL); padding-left:10px; line-height:1.9; transition:opacity .3s; }
+  #legend b{ color:rgba(248,247,229,.9); font-weight:600; letter-spacing:.14em; font-size:10px; }
+  .gdot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+  #ownLegend{ display:none; margin-top:4px; }
+  #ownLegend.show{ display:block; }
+
+  /* ---------- 底部：年份滑块 + 提示 ---------- */
+  #dock{ position:fixed; left:50%; bottom:0; transform:translateX(-50%); z-index:18; width:min(720px,94vw);
+    padding:14px 18px calc(12px + env(safe-area-inset-bottom)); text-align:center;
+    background:linear-gradient(transparent, rgba(14,13,11,.55) 45%); }
+  #eraLabel{ font-size:13px; letter-spacing:.06em; color:var(--paper); margin-bottom:2px; min-height:22px; }
+  #eraLabel .badge{ margin-left:8px; }
+  #eraText{ font-size:11px; color:rgba(248,247,229,.66); min-height:17px; margin-bottom:6px; }
+  #yearSlider{ width:100%; appearance:none; -webkit-appearance:none; height:26px; background:transparent; cursor:pointer; }
+  #yearSlider::-webkit-slider-runnable-track{ height:2px; background:linear-gradient(90deg, rgba(248,247,229,.15), rgba(179,156,79,.8)); }
+  #yearSlider::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--ochre);
+    border:2px solid #1D1D1D; margin-top:-7px; box-shadow:0 0 0 1px var(--ochre); transition:transform .15s; }
+  #yearSlider::-webkit-slider-thumb:hover{ transform:scale(1.25); }
+  #yearSlider::-moz-range-track{ height:2px; background:rgba(248,247,229,.25); }
+  #yearSlider::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background:var(--ochre); border:2px solid #1D1D1D; }
+  #ticks{ display:flex; justify-content:space-between; font-size:9.5px; color:rgba(248,247,229,.5); letter-spacing:.05em; padding:0 4px; }
+  #ticks span{ cursor:pointer; padding:3px 6px; border-radius:2px; transition:color .15s, background .15s; }
+  #ticks span:hover{ color:var(--paper); background:rgba(248,247,229,.08); }
+  #ticks span.active{ color:var(--ochre); font-weight:600; }
+  #hint{ font-size:11px; color:rgba(248,247,229,.55); margin-top:5px; letter-spacing:.05em; min-height:16px; }
+
+  /* ---------- 证据卡 ---------- */
+  #card{ position:fixed; right:0; top:0; bottom:0; z-index:30; width:min(400px,100vw);
+    background:var(--panel); backdrop-filter:blur(10px); border-left:1px solid var(--hairL);
+    padding:64px 26px 26px; transform:translateX(102%); transition:transform .38s cubic-bezier(.22,1,.36,1); overflow-y:auto;
+    scrollbar-width:thin; scrollbar-color:rgba(179,156,79,.5) transparent; }
+  #card::-webkit-scrollbar{ width:5px; }
+  #card::-webkit-scrollbar-thumb{ background:rgba(179,156,79,.4); }
+  #card.show{ transform:translateX(0); }
+  #cardClose{ position:absolute; top:16px; right:18px; border:1px solid var(--hairL); background:none; color:rgba(248,247,229,.8);
+    font-size:11px; letter-spacing:.1em; padding:6px 12px; cursor:pointer; }
+  #cardClose:hover{ border-color:var(--ochre); color:var(--ochre); }
+  #cardId{ font-size:10px; letter-spacing:.22em; color:var(--ochre); }
+  #cardTitle{ font-family:var(--serif); font-size:20px; margin:6px 0 2px; letter-spacing:.04em; }
+  #cardTitleEn{ font-size:11px; color:rgba(248,247,229,.55); letter-spacing:.08em; margin-bottom:10px; }
+  .badge{ display:inline-flex; align-items:center; gap:5px; font-size:10px; letter-spacing:.12em; padding:3px 9px;
+    border:1px solid currentColor; border-radius:20px; }
+  .badge i{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  #cardBody{ font-size:13.5px; line-height:1.85; color:rgba(248,247,229,.88); margin:14px 0 16px; }
+  #cardSrc{ font-size:11px; color:rgba(248,247,229,.55); border-top:1px dashed var(--hairL); padding-top:10px; }
+  #cardSrc b{ color:rgba(248,247,229,.75); letter-spacing:.12em; font-weight:600; }
+  /* 卡片内实拍照片 */
+  #cardPhotos{ margin:2px 0 14px; display:none; }
+  #cardPhotos.show{ display:block; }
+  #cardPhotos .ph{ position:relative; margin-bottom:10px; cursor:zoom-in; overflow:hidden; border:1px solid var(--hairL); }
+  #cardPhotos .ph img{ display:block; width:100%; height:auto; transition:transform .5s cubic-bezier(.22,1,.36,1); }
+  #cardPhotos .ph:hover img{ transform:scale(1.035); }
+  #cardPhotos .ph .cap{ position:absolute; left:0; right:0; bottom:0; padding:14px 10px 7px; font-size:10.5px;
+    color:rgba(248,247,229,.92); background:linear-gradient(transparent, rgba(12,11,9,.85)); letter-spacing:.03em; }
+  #cardPhotos .ph .cap i{ font-style:normal; color:#8fbf84; }
+  #cardPhotos .simNote{ font-size:10px; color:rgba(248,247,229,.5); margin:6px 0 8px; line-height:1.7; letter-spacing:.02em; }
+  #chain{ margin-top:16px; border-top:1px solid var(--hairL); padding-top:12px; }
+  #chain h3{ font-size:11px; letter-spacing:.16em; color:var(--ochre); margin:0 0 10px; font-weight:600; }
+  .chainRow{ display:flex; gap:10px; align-items:baseline; padding:7px 0; border-top:1px dashed var(--hairL); font-size:12px; }
+  .chainRow .nm{ flex:0 0 64px; font-weight:600; }
+  .chainRow .tx{ flex:1; color:rgba(248,247,229,.7); font-size:11.5px; }
+
+  /* ---------- 热点浮标 ---------- */
+  .hslabel{ position:fixed; z-index:12; pointer-events:none; transform:translate(-50%,-130%);
+    font-size:11px; letter-spacing:.06em; color:var(--paper); background:rgba(20,18,14,.8);
+    padding:3px 10px; border:1px solid var(--hairL); border-radius:20px; white-space:nowrap; opacity:0; transition:opacity .15s; }
+
+  /* ---------- 覆盖层（入口/收束/关于/视角） ---------- */
+  .overlay{ position:fixed; inset:0; z-index:50; display:none; overflow-y:auto; }
+  .overlay.show{ display:block; }
+  #intro{ background:var(--paper); color:var(--ink); }
+  #intro .wrap{ max-width:640px; margin:0 auto; padding:8vh 28px 60px; }
+  #intro .kick{ font-size:10px; letter-spacing:.28em; color:var(--ochre); }
+  #intro h1{ font-family:var(--serif); font-size:clamp(34px,6vw,52px); margin:10px 0 4px; letter-spacing:.08em; }
+  #intro .tgen{ font-size:13px; letter-spacing:.2em; color:rgba(29,29,29,.55); text-transform:uppercase; }
+  #intro .tg{ font-family:var(--serif); font-size:16px; margin:18px 0 22px; color:#4a4636; }
+  #intro .stmt{ font-size:13.5px; line-height:2.0; color:#33322c; border-left:2px solid var(--ochre); padding-left:14px; }
+  #intro .nums{ font-size:12px; letter-spacing:.06em; margin:18px 0; color:#6b6552; }
+  #intro .cols{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:20px 0 8px; }
+  #intro h3{ font-size:10.5px; letter-spacing:.2em; color:var(--ochre); margin:0 0 6px; }
+  #intro .cols p{ font-size:12px; line-height:1.9; margin:0; color:#4a4636; }
+  #intro .grades{ font-size:12px; line-height:2.1; color:#4a4636; }
+  #enterBtn{ margin-top:34px; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper);
+    font-size:15px; letter-spacing:.3em; padding:16px 46px 16px 52px; cursor:pointer; font-family:var(--serif); transition:all .2s; }
+  #enterBtn:hover{ background:var(--ochre); border-color:var(--ochre); color:#1D1D1D; }
+  #intro .sub{ font-size:11px; color:#8a8471; margin-top:12px; letter-spacing:.08em; }
+  #intro .ainote{ margin-top:26px; font-size:10.5px; color:#9a3040; border-top:1px dashed var(--hair); padding-top:12px; line-height:1.8; }
+
+  #summary{ background:rgba(14,13,11,.96); color:var(--paper); }
+  #summary .wrap{ max-width:760px; margin:0 auto; padding:9vh 28px 60px; }
+  #summary .kick{ font-size:10px; letter-spacing:.28em; color:var(--ochre); }
+  #summary h2{ font-family:var(--serif); font-size:30px; margin:8px 0 4px; letter-spacing:.1em; }
+  #summary .note{ font-size:12px; color:rgba(248,247,229,.55); margin-bottom:30px; }
+  .trow{ display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:baseline; padding:20px 0; border-top:1px solid var(--hairL); }
+  .trow .a{ font-family:var(--serif); font-size:22px; text-align:right; }
+  .trow .vs{ color:var(--ochre); font-size:11px; letter-spacing:.2em; }
+  .trow .b{ font-family:var(--serif); font-size:22px; }
+  .trow .tx{ grid-column:1/-1; font-size:12.5px; color:rgba(248,247,229,.7); line-height:1.9; }
+  #sumConcl{ margin-top:26px; font-size:14px; line-height:2; border-left:2px solid var(--ochre); padding-left:14px; color:rgba(248,247,229,.92); }
+  #sumQ{ margin-top:22px; font-family:var(--serif); font-size:19px; line-height:1.8; color:var(--ochre); }
+  .ovClose{ position:fixed; top:18px; right:22px; z-index:52; border:1px solid var(--hairL); background:rgba(20,18,14,.5);
+    color:var(--paper); font-size:11px; letter-spacing:.14em; padding:8px 16px; cursor:pointer; }
+  .ovClose:hover{ border-color:var(--ochre); color:var(--ochre); }
+  #intro .ovClose{ border-color:var(--hair); background:none; color:var(--ink); }
+
+  #about{ background:var(--paper); color:var(--ink); }
+  #about .wrap{ max-width:680px; margin:0 auto; padding:8vh 28px 70px; }
+  #about h2{ font-family:var(--serif); font-size:26px; margin:6px 0 18px; letter-spacing:.08em; }
+  #about h3{ font-size:11px; letter-spacing:.2em; color:var(--ochre); margin:26px 0 8px; }
+  #about p, #about li{ font-size:12.5px; line-height:1.95; color:#3a382f; }
+  #about ul{ list-style:none; padding:0; margin:0; }
+  #about li{ padding:7px 0; border-top:1px dashed var(--hair); display:flex; gap:8px; align-items:baseline; }
+  #about li .sid{ flex:0 0 30px; font-size:10px; color:#8a8471; letter-spacing:.1em; }
+  #about .badge{ font-size:9px; padding:1px 7px; flex:0 0 auto; }
+  #about .ovClose{ border-color:var(--hair); background:none; color:var(--ink); }
+
+  /* ---------- 创作依据 ---------- */
+  #refs{ background:var(--paper); color:var(--ink); }
+  #refs .wrap{ max-width:760px; margin:0 auto; padding:8vh 28px 70px; }
+  #refs .kick{ font-size:10px; letter-spacing:.28em; color:var(--ochre); }
+  #refs h2{ font-family:var(--serif); font-size:26px; margin:6px 0 4px; letter-spacing:.08em; }
+  #refs .note{ font-size:12.5px; line-height:1.95; color:#3a382f; margin:10px 0 8px; }
+  #refs h3{ font-size:11px; letter-spacing:.2em; color:var(--ochre); margin:28px 0 10px; }
+  #refs .planFig{ margin:0; }
+  #refs .planFig img{ width:100%; border:1px solid var(--hair); cursor:zoom-in; background:#fff; }
+  #refs .planFig figcaption{ font-size:11px; color:#6b6552; margin-top:6px; line-height:1.8; }
+  .phGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .phGrid .cell{ position:relative; aspect-ratio:4/3; overflow:hidden; cursor:zoom-in; background:#ddd8c8; }
+  .phGrid .cell img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s cubic-bezier(.22,1,.36,1); }
+  .phGrid .cell:hover img{ transform:scale(1.06); }
+  .phGrid .cell .c{ position:absolute; left:0; right:0; bottom:0; padding:12px 8px 5px; font-size:9.5px; line-height:1.4;
+    color:rgba(248,247,229,.95); background:linear-gradient(transparent, rgba(12,11,9,.8)); }
+  .phTip{ font-size:10.5px; color:#8a8471; margin-top:8px; letter-spacing:.06em; }
+  #refs .ovClose{ border-color:var(--hair); background:none; color:var(--ink); }
+  @media (max-width:760px){ .phGrid{ grid-template-columns:repeat(2,1fr); } }
+
+  /* ---------- 灯箱 ---------- */
+  #lightbox{ position:fixed; inset:0; z-index:80; display:none; place-items:center; background:rgba(10,9,7,.92);
+    backdrop-filter:blur(6px); cursor:zoom-out; }
+  #lightbox.show{ display:grid; }
+  #lightbox img{ max-width:92vw; max-height:82vh; border:1px solid var(--hairL); }
+  #lbCap{ position:fixed; bottom:calc(18px + env(safe-area-inset-bottom)); left:0; right:0; text-align:center;
+    font-size:12px; color:rgba(248,247,229,.85); letter-spacing:.04em; padding:0 20px; }
+
+  #viewPanel{ position:fixed; left:22px; bottom:170px; z-index:16; width:min(300px,80vw); display:none;
+    background:var(--panel); backdrop-filter:blur(8px); border:1px solid var(--hairL); padding:16px 18px; }
+  #viewPanel.show{ display:block; }
+  #viewPanel h3{ margin:0 0 2px; font-size:10px; letter-spacing:.2em; color:var(--ochre); }
+  #viewPanel .vbtns{ display:flex; flex-direction:column; gap:2px; margin:10px 0; }
+  #viewPanel .vbtns button{ text-align:left; border:0; border-left:2px solid transparent; background:none; color:rgba(248,247,229,.85);
+    font-size:12.5px; padding:7px 10px; cursor:pointer; }
+  #viewPanel .vbtns button:hover{ color:var(--ochre); }
+  #viewPanel .vbtns button.on{ border-left-color:var(--ochre); color:var(--ochre); background:rgba(179,156,79,.08); }
+  #viewText{ font-size:11.5px; line-height:1.85; color:rgba(248,247,229,.75); border-top:1px dashed var(--hairL); padding-top:10px; }
+  #viewSum{ font-size:10.5px; color:rgba(248,247,229,.5); margin-top:8px; }
+
+  #ownPanel{ position:fixed; left:22px; bottom:170px; z-index:16; width:min(300px,80vw); display:none;
+    background:var(--panel); backdrop-filter:blur(8px); border:1px solid var(--hairL); padding:16px 18px; }
+  #ownPanel.show{ display:block; }
+  #ownPanel h3{ margin:0 0 2px; font-size:10px; letter-spacing:.2em; color:var(--ochre); }
+  #ownPanel .note{ font-size:10.5px; color:rgba(248,247,229,.55); line-height:1.7; }
+  #ownPanel .obtns{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  #ownPanel .obtns button{ border:1px solid var(--hairL); background:none; color:rgba(248,247,229,.85); font-size:11.5px;
+    padding:7px 11px; cursor:pointer; display:flex; align-items:center; gap:6px; min-height:34px; }
+  #ownPanel .obtns button i{ width:8px; height:8px; border-radius:50%; }
+  #ownPanel .obtns button.on{ border-color:var(--ochre); color:var(--ochre); }
+  #ownText{ font-size:11px; color:rgba(248,247,229,.65); margin-top:10px; min-height:18px; line-height:1.7; }
+
+  /* 移动端前后移动按钮 */
+  #walkBtns{ position:fixed; right:16px; bottom:120px; z-index:17; display:none; flex-direction:column; gap:10px; }
+  #walkBtns button{ width:48px; height:48px; border-radius:50%; border:1px solid var(--hairL); background:rgba(20,18,14,.5);
+    color:var(--paper); font-size:18px; cursor:pointer; backdrop-filter:blur(6px); }
+  body.touch #walkBtns{ display:flex; }
+  body.touch #hint .desk{ display:none; }
+
+  #loading{ position:fixed; inset:0; z-index:60; display:grid; place-items:center; align-content:center; gap:18px; background:#0e0d0b;
+    color:rgba(248,247,229,.6); letter-spacing:.3em; font-size:11px; }
+  #ldHint{ color:rgba(248,247,229,.38); letter-spacing:.12em; font-size:10px; line-height:2; text-align:center; }
+  #ldRetry{ background:none; border:1px solid rgba(248,247,229,.4); color:rgba(248,247,229,.75);
+    letter-spacing:.25em; font-size:11px; padding:10px 22px; cursor:pointer; }
+  #ldRetry:hover{ border-color:#b39c4f; color:#b39c4f; }
+  #fallback{ position:fixed; inset:0; z-index:70; display:none; place-items:center; text-align:center; background:var(--paper); color:var(--ink); padding:24px; font-size:14px; line-height:2; }
+
+  @media (max-width:760px){
+    #topbar{ padding:12px 14px 0; flex-direction:column; gap:8px; align-items:flex-start; }
+    #titleBlock h1{ font-size:17px; } #titleBlock .tg{ display:none; } #titleBlock .en{ font-size:9px; }
+    #actions{ gap:3px; max-width:100%; justify-content:flex-start; } #actions button{ font-size:10.5px; padding:6px 8px; min-height:32px; }
+    #legend{ display:none; }
+    #card{ top:auto; bottom:0; left:0; right:0; width:100%; max-height:62vh; border-left:0; border-top:1px solid var(--hairL);
+      transform:translateY(102%); padding:20px 20px calc(20px + env(safe-area-inset-bottom)); }
+    #card.show{ transform:translateY(0); }
+    #viewPanel,#ownPanel{ left:12px; bottom:190px; width:min(270px,86vw); }
+    #intro .cols{ grid-template-columns:1fr; }
+    .trow .a,.trow .b{ font-size:17px; }
+  }
+  @media (prefers-reduced-motion:reduce){ #card{ transition:none; } }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/lib/three.module.js?v=net4",
+    "gsap": "./vendor/gsap/index.js?v=net4"
+  }
+}
+</script>
+</head>
+<body>
+<div id="loading"><div id="ldMsg">加载中 · LOADING…</div><div id="ldHint" hidden>加载时间较长 · Taking longer than usual…</div><button id="ldRetry" hidden type="button">重新加载 · RELOAD</button></div>
+<script>
+window.__BOOT = './js/main.js?v=net4';
+(function () {
+  const ld = () => document.getElementById('loading');
+  const fail = (detail) => {
+    if (!ld()) return;
+    const m = document.getElementById('ldMsg');
+    if (m) m.innerHTML = '加载失败，请点下方重试 ·<br>Failed to load — please retry';
+    const h = document.getElementById('ldHint');
+    if (h) { h.hidden = false; if (detail) h.textContent = String(detail).slice(0, 180); }
+    const b = document.getElementById('ldRetry'); if (b) b.hidden = false;
+  };
+  window.__ldFail = fail;
+  // 只把「脚本失败 / JS 运行错误」视为致命；图片、音频失败不拦启动
+  window.addEventListener('error', (e) => {
+    const t = e.target;
+    if (t && t !== window && t.tagName && t.tagName !== 'SCRIPT') return;
+    fail(e.message || (t && t.src) || 'script error');
+  }, true);
+  const retry = document.getElementById('ldRetry');
+  if (retry) retry.addEventListener('click', () => location.reload());
+  // 超时自诊断：重新拉一次入口模块，把真实报错显示出来
+  window.__ldTimer = setTimeout(async () => {
+    if (!ld()) return;
+    const h = document.getElementById('ldHint'); if (h) h.hidden = false;
+    const b = document.getElementById('ldRetry'); if (b) b.hidden = false;
+    try {
+      await Promise.race([
+        import(window.__BOOT),
+        new Promise((_, rj) => setTimeout(() => rj(new Error('network timeout · 网络超时')), 15000))
+      ]);
+    } catch (err) { fail(err && err.message); }
+  }, 9000);
+})();
+</script>
+<div id="grain"></div>
+
+<header id="topbar" hidden>
+  <div id="titleBlock">
+    <div class="en">THE NET ABOVE US · MINZHU RD, WUHAN</div>
+    <h1 data-i18n="siteTitle">头顶的网</h1>
+    <div class="tg" data-i18n="tagline">一根电线杆，如何串起三十年的「头顶的网」</div>
+  </div>
+  <nav id="actions">
+    <button id="btnDay" aria-pressed="false" data-i18n="btnDay">日 / 夜</button>
+    <button id="btnOwn" aria-pressed="false" data-i18n="btnOwn">权属</button>
+    <button id="btnView" aria-pressed="false" data-i18n="btnView">视角</button>
+    <button id="btnSum" data-i18n="btnSum">收束</button>
+    <button id="btnRef" data-i18n="btnRef">依据</button>
+    <button id="btnSound" aria-pressed="false" data-i18n="btnSound">声音</button>
+    <button id="btnAbout" data-i18n="btnInfo">关于</button>
+    <button id="btnLang">EN</button>
+  </nav>
+</header>
+
+<aside id="legend" hidden>
+  <b data-i18n="legendGrade">证据分级</b><br>
+  <span class="gdot" style="background:var(--evid)"></span><span data-i18n-g="evidence">证据 · 现场/文件</span><br>
+  <span class="gdot" style="background:var(--infer)"></span><span data-i18n-g="inference">推测 · 待核实</span><br>
+  <span class="gdot" style="background:var(--sim)"></span><span data-i18n-g="simulation">模拟 · AI辅助场景</span>
+  <div id="ownLegend"></div>
+</aside>
+
+<div id="viewPanel"></div>
+<div id="ownPanel"></div>
+
+<div id="walkBtns">
+  <button id="walkFwd" aria-label="forward">↑</button>
+  <button id="walkBack" aria-label="back">↓</button>
+</div>
+
+<footer id="dock" hidden>
+  <div id="eraLabel"></div>
+  <div id="eraText"></div>
+  <input id="yearSlider" type="range" min="0" max="5" step="1" value="4" aria-label="year">
+  <div id="ticks"></div>
+  <div id="hint"></div>
+</footer>
+
+<aside id="card" role="dialog" aria-live="polite">
+  <button id="cardClose" data-i18n="closeCard">关闭</button>
+  <div id="cardId"></div>
+  <h2 id="cardTitle"></h2>
+  <div id="cardTitleEn"></div>
+  <span id="cardBadge" class="badge"></span>
+  <p id="cardBody"></p>
+  <div id="chain"></div>
+  <div id="cardPhotos"></div>
+  <div id="cardSrc"></div>
+</aside>
+
+<div id="intro" class="overlay show">
+  <button class="ovClose" data-close="intro">SKIP · 跳过</button>
+  <div class="wrap">
+    <div class="kick">VIS5027 · MIDTERM · ROUTE C</div>
+    <h1 data-i18n="siteTitle">头顶的网</h1>
+    <div class="tgen">The Net Above Us</div>
+    <p class="tg" data-i18n="tagline"></p>
+    <p class="stmt" data-i18n="statement"></p>
+    <div class="nums" data-i18n="keyNums"></div>
+    <div class="cols">
+      <div><h3 data-i18n="howTitle"></h3><p data-i18n="how"></p></div>
+      <div><h3 data-i18n="pathTitle"></h3><p data-i18n="path"></p></div>
+    </div>
+    <div class="grades" id="introGrades"></div>
+    <div><button id="enterBtn" data-i18n="enter">进入巷子</button>
+    <div class="sub" data-i18n="enterHint"></div></div>
+    <div class="ainote" data-i18n="aiNote"></div>
+  </div>
+</div>
+
+<div id="summary" class="overlay">
+  <button class="ovClose" data-close="summary" data-i18n="ovClose">ESC · 关闭</button>
+  <div class="wrap">
+    <div class="kick">TENSIONS</div>
+    <h2 data-i18n="sumTitle"></h2>
+    <div class="note" data-i18n="sumNote"></div>
+    <div id="tensionRows"></div>
+    <p id="sumConcl"></p>
+    <p id="sumQ"></p>
+  </div>
+</div>
+
+<div id="about" class="overlay">
+  <button class="ovClose" data-close="about" data-i18n="ovClose">ESC · 关闭</button>
+  <div class="wrap">
+    <div class="kick" data-i18n="courseLine"></div>
+    <h2 data-i18n="creditsTitle"></h2>
+    <p data-i18n="statement"></p>
+    <p data-i18n="audience"></p>
+    <p data-i18n="designQ"></p>
+    <h3 data-i18n="srcTitle"></h3>
+    <ul id="srcList"></ul>
+    <h3 data-i18n="aiTitle"></h3>
+    <p data-i18n="aiStatement"></p>
+    <h3 data-i18n="setupTitle"></h3>
+    <p data-i18n="setup"></p>
+    <h3 data-i18n="thanksTitle"></h3>
+    <p data-i18n="thanks"></p>
+  </div>
+</div>
+
+<div id="refs" class="overlay">
+  <button class="ovClose" data-close="refs" data-i18n="ovClose">ESC · 关闭</button>
+  <div class="wrap">
+    <div class="kick">FIELD MATERIAL</div>
+    <h2 data-i18n="refTitle"></h2>
+    <p class="note" data-i18n="refNote"></p>
+    <h3 data-i18n="refPlanT"></h3>
+    <figure class="planFig">
+      <img src="./assets/photos/section-plan.jpg" alt="巷道剖面与俯视图（估算复原）" data-zoom="./assets/photos/section-plan.jpg">
+      <figcaption data-i18n="refPlanC"></figcaption>
+    </figure>
+    <h3 data-i18n="refPhotosT"></h3>
+    <div class="phGrid" id="phGrid"></div>
+    <div class="phTip" data-i18n="refTip"></div>
+  </div>
+</div>
+
+<div id="lightbox">
+  <img id="lbImg" alt="">
+  <div id="lbCap"></div>
+</div>
+
+<div id="fallback"><div>当前环境不支持 WebGL，无法渲染 3D 场景。<br>WebGL is not available in this browser.<br><br>头顶的网 · The Net Above Us —— 巷道上空的电线电缆：一杆约 12 根 · 离地约 3 m · 大多 20–35 年。</div></div>
+
+<script type="module" src="./js/main.js?v=net4"></script>
+</body>
+</html>
